@@ -1,4 +1,5 @@
 import { getSessionProfile, signOut } from './supabase-client.js';
+import './admin-dashboard.js';
 
 const state = { supabase: null, session: null, profile: null };
 const roleLabels = { super_admin: 'Super admin', admin: 'Administrator', instructor: 'Instructor', student: 'Student' };
@@ -24,6 +25,10 @@ function formatDate(value) {
 
 function empty(message) {
   return `<p class="empty-state">${message}</p>`;
+}
+
+function escapeHtml(value = '') {
+  return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
 }
 
 function renderMetric(label, value, note, tone = '') {
@@ -61,8 +66,8 @@ async function loadFeed() {
   ]);
   if (announcementError) throw announcementError;
   if (notificationError) throw notificationError;
-  document.querySelector('[data-announcement-list]').innerHTML = announcements?.length ? announcements.map((item) => `<article class="feed-item"><span class="feed-mark">A</span><div><strong>${item.title}</strong><p>${item.body}</p><small>${formatDate(item.published_at)}</small></div></article>`).join('') : empty('No academy announcements yet.');
-  document.querySelector('[data-notification-list]').innerHTML = notifications?.length ? notifications.map((item) => `<article class="feed-item ${item.read_at ? '' : 'is-unread'}"><span class="feed-mark">${item.read_at ? '○' : '●'}</span><div><strong>${item.title}</strong><p>${item.message}</p><small>${formatDate(item.created_at)}</small></div></article>`).join('') : empty('You are all caught up.');
+  document.querySelector('[data-announcement-list]').innerHTML = announcements?.length ? announcements.map((item) => `<article class="feed-item"><span class="feed-mark">A</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.body)}</p><small>${formatDate(item.published_at)}</small></div></article>`).join('') : empty('No academy announcements yet.');
+  document.querySelector('[data-notification-list]').innerHTML = notifications?.length ? notifications.map((item) => `<article class="feed-item ${item.read_at ? '' : 'is-unread'}"><span class="feed-mark">${item.read_at ? '○' : '●'}</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.message)}</p><small>${formatDate(item.created_at)}</small></div></article>`).join('') : empty('You are all caught up.');
   document.querySelector('[data-notification-count]').textContent = notifications?.filter((item) => !item.read_at).length || 0;
 }
 
@@ -95,7 +100,7 @@ async function init() {
     configureNavigation();
     await Promise.all([loadOverview(), loadFeed()]);
     document.body.classList.remove('is-loading');
-    window.FRA_DASHBOARD = { state, showAlert, empty, formatDate };
+    window.FRA_DASHBOARD = { state, showAlert, empty, formatDate, escapeHtml };
     window.dispatchEvent(new CustomEvent('fra:dashboard-ready', { detail: state }));
   } catch (error) {
     document.body.classList.remove('is-loading');

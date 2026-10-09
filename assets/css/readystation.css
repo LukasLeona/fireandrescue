@@ -974,6 +974,42 @@ h1, h2, h3, .player-course-title, .stat-card strong {
   .assessment-navigator { grid-template-columns: repeat(5, 1fr); }
 }
 
+/* Authentication and account application */
+.auth-form-wrap { overflow-y: auto; }
+.auth-form > div:first-child > p { margin: 5px 0 0; color: var(--ink-soft); }
+.auth-form textarea.form-control { min-height: 92px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.optional { color: #74807d; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+.field-help { display: block; margin-top: 6px; color: #6f7c79; font-size: 11px; }
+.consent-row { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; color: var(--ink-soft); font-size: 12px; line-height: 1.45; }
+.consent-row input { margin-top: 2px; accent-color: var(--wine); }
+.auth-message { padding: 12px 14px; border: 1px solid; border-radius: 10px; font-size: 13px; }
+.auth-message.is-error { border-color: #e5b2aa; background: #fff2f0; color: #8a261c; }
+.auth-message.is-success { border-color: #a9d5b8; background: #edf8f1; color: #235d37; }
+.button-spinner { width: 17px; height: 17px; display: inline-block; border: 2px solid rgba(255,255,255,.38); border-top-color: #fff; border-radius: 50%; animation: auth-spin .7s linear infinite; }
+@keyframes auth-spin { to { transform: rotate(360deg); } }
+.status-page { min-height: 100vh; display: grid; place-items: center; align-content: center; gap: 30px; padding: 32px 20px; background: radial-gradient(circle at 50% 12%, rgba(242,228,178,.35), transparent 28%), var(--mist); }
+.status-page > .brand { color: var(--green-900); }
+.auth-status-card { width: min(620px,100%); padding: clamp(28px,6vw,54px); border: 1px solid var(--line); border-radius: 24px; background: #fff; box-shadow: var(--shadow-sm); text-align: center; }
+.status-icon { width: 74px; height: 74px; display: grid; place-items: center; margin: 0 auto 22px; border-radius: 50%; background: var(--green-900); color: var(--cream); font: 800 30px/1 'Barlow Condensed', sans-serif; box-shadow: 0 0 0 9px rgba(20,39,37,.07); }
+.status-icon.is-loading { animation: status-pulse 1.2s ease-in-out infinite alternate; }
+@keyframes status-pulse { to { transform: scale(.92); opacity: .7; } }
+.auth-status-card h1 { margin: 9px 0 12px; color: var(--green-900); font-size: clamp(34px,6vw,52px); line-height: 1; text-transform: uppercase; }
+.auth-status-card > p:not(.eyebrow) { max-width: 490px; margin: 0 auto; color: var(--ink-soft); }
+.status-details { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; margin: 28px 0 0; border: 1px solid var(--line); background: var(--line); text-align: left; }
+.status-details div { min-width: 0; padding: 14px; background: #fff; }
+.status-details dt { color: #7c8885; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.status-details dd { overflow-wrap: anywhere; margin: 5px 0 0; color: var(--green-900); font-size: 13px; font-weight: 800; text-transform: capitalize; }
+.status-pill { display: inline-flex; padding: 4px 8px; border-radius: 999px; background: #fff0c4; color: #725311; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
+.status-pill[data-status="rejected"], .status-pill[data-status="suspended"] { background: #ffe3df; color: #89271c; }
+.status-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 30px; }
+.status-actions .btn-ghost { border-color: var(--line); color: var(--green-900); }
+@media (max-width: 620px) {
+  .form-row, .status-details { grid-template-columns: 1fr; }
+  .auth-visual { min-height: 350px; }
+  .auth-visual h1 { font-size: 44px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-backdrop, .hero-scroll i::after, .rs-bot-toggle::before { animation: none !important; }
   .course-card:hover, .category-card:hover, .quiz-option:hover, .match-item:hover, .drag-chip:hover { transform: none; }

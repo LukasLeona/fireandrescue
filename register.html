@@ -1,20 +1,38 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Fire and Rescue Academy demo registration."><meta name="theme-color" content="#142725">
-<link rel="icon" href="assets/images/academy-favicon-clean.png" type="image/png">
-<link rel="stylesheet" href="assets/css/readystation.css">
-<title>Create Account | Fire and Rescue Academy</title>
-<meta name="robots" content="noindex,nofollow">
-<link rel="canonical" href="https://fireandrescueacademy.example/register.html">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Create Account | Fire and Rescue Academy">
-<meta property="og:description" content="Fire and Rescue Academy demo registration.">
-<meta property="og:url" content="https://fireandrescueacademy.example/register.html">
-<meta property="og:image" content="https://fireandrescueacademy.example/assets/images/home-hero-firefighters.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Create Account | Fire and Rescue Academy">
-<meta name="twitter:description" content="Fire and Rescue Academy demo registration.">
-<!-- Replace the .example canonical host when the production domain is connected. -->
-</head><body><a class="skip-link" href="#main">Skip to content</a>
-<main class="auth-page"><section class="auth-visual"><a class="brand" href="index.html"><span class="brand-lockup"><span class="brand-emblem"><img src="assets/images/academy-emblem-clean-256.png" alt="" width="256" height="256" aria-hidden="true"></span><span class="brand-wordmark"><strong>Fire &amp; Rescue</strong><small>Academy</small></span></span></a><div><h1>Join Fire and Rescue Academy.</h1><p>Create a learner profile for future access to courses, progress, and completion records.</p></div><p>Professional firefighter learning · Responsive course delivery · Interactive checkpoints</p></section><section class="auth-form-wrap"><form class="auth-form form-grid" data-demo-form="register"><div><h2>Create account</h2><p>Enter your information below.</p></div><div class="form-note">Demo only: authentication is not connected yet. The production phase will connect secure accounts and learner records.</div><div class="form-group"><label for="name">Full name</label><input class="form-control" id="name" autocomplete="name" required></div><div class="form-group"><label for="email">Email address</label><input class="form-control" id="email" type="email" autocomplete="email" required></div><div class="form-group"><label for="password">Password</label><input class="form-control" id="password" type="password" autocomplete="new-password" required></div><button class="btn btn-primary" type="submit">Create account <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><div class="auth-links"><a href="login.html">Already have an account? Log in</a><br><a href="index.html">Return to homepage</a></div></form></section></main><div class="toast" role="status" aria-live="polite"></div><script src="assets/js/readystation.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Apply for a Fire and Rescue Academy learning account."><meta name="theme-color" content="#142725"><meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="assets/images/academy-favicon-clean.png" type="image/png"><link rel="stylesheet" href="assets/css/readystation.css">
+  <title>Apply for access | Fire and Rescue Academy</title>
+</head>
+<body data-auth-page="register">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <main class="auth-page" id="main">
+    <section class="auth-visual">
+      <a class="brand" href="index.html" aria-label="Fire and Rescue Academy home"><span class="brand-lockup"><span class="brand-emblem"><img src="assets/images/academy-emblem-clean-256.png" alt="" width="256" height="256" aria-hidden="true"></span><span class="brand-wordmark"><strong>Fire &amp; Rescue</strong><small>Academy</small></span></span></a>
+      <div><p class="eyebrow">Join the academy</p><h1>Build readiness that shows.</h1><p>Apply for a role-based learning account. Every application is reviewed to keep training records and instructor access secure.</p></div>
+      <p>Verified membership · Role-based access · Progress that follows you</p>
+    </section>
+    <section class="auth-form-wrap">
+      <form class="auth-form form-grid" data-auth-form novalidate>
+        <div><h2>Create your application</h2><p>Tell the academy who you are and how you will use the platform.</p></div>
+        <div class="form-row">
+          <div class="form-group"><label for="full-name">Full name</label><input class="form-control" id="full-name" name="full_name" autocomplete="name" required></div>
+          <div class="form-group"><label for="phone">Phone <span class="optional">Optional</span></label><input class="form-control" id="phone" name="phone" type="tel" autocomplete="tel"></div>
+        </div>
+        <div class="form-group"><label for="organization">Organization / station</label><input class="form-control" id="organization" name="organization" autocomplete="organization" placeholder="e.g. City Fire Department" required></div>
+        <div class="form-group"><label for="requested-role">Requested role</label><select class="form-control" id="requested-role" name="requested_role" required><option value="student">Student</option><option value="instructor">Instructor</option><option value="admin">Administrator</option></select><small class="field-help">Instructor and administrator requests receive additional review.</small></div>
+        <div class="form-group"><label for="email">Email address</label><input class="form-control" id="email" name="email" type="email" autocomplete="email" required></div>
+        <div class="form-group"><label for="password">Password</label><input class="form-control" id="password" name="password" type="password" autocomplete="new-password" minlength="8" required><small class="field-help">Use at least 8 characters.</small></div>
+        <div class="form-group"><label for="application-note">Why are you joining? <span class="optional">Optional</span></label><textarea class="form-control" id="application-note" name="application_note" rows="3" maxlength="1000" placeholder="Share your training goals or role at your organization."></textarea></div>
+        <label class="consent-row"><input name="terms" type="checkbox" required><span>I confirm that the information above is accurate and understand that access requires approval.</span></label>
+        <div class="auth-message" data-auth-message role="status" aria-live="polite" hidden></div>
+        <button class="btn btn-primary" type="submit" data-submit-button>Submit application <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <div class="auth-links"><a href="login.html">Already have an account? Log in</a><br><a href="index.html">Return to homepage</a></div>
+      </form>
+    </section>
+  </main>
+  <script type="module" src="assets/js/auth.js"></script>
+</body>
+</html>

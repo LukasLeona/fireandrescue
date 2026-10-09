@@ -1,6 +1,7 @@
 import { getSessionProfile, signOut } from './supabase-client.js';
 import './admin-dashboard.js';
 import './instructor-dashboard.js';
+import './student-dashboard.js';
 
 const state = { supabase: null, session: null, profile: null };
 const roleLabels = { super_admin: 'Super admin', admin: 'Administrator', instructor: 'Instructor', student: 'Student' };

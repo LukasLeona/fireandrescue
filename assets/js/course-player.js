@@ -1,3 +1,5 @@
+import { initializeCourseSync } from './course-sync.js';
+
 (() => {
   'use strict';
 
@@ -28,6 +30,7 @@
   const openChapters = new Set(JSON.parse(localStorage.getItem(chapterStateKey) || JSON.stringify(courseData.chapters.map(ch => ch.id))));
   let drillBonusXp = Number(localStorage.getItem(drillBonusKey) || 0);
   let currentIndex = 0;
+  let courseSync = null;
 
   const elements = {
     outline: $('#courseOutline'),
@@ -91,6 +94,7 @@
       updateProgress();
       celebrateProgress();
       showToast(silent ? '+100 XP. Training progress saved.' : '+100 XP. Lesson item complete.');
+      courseSync?.saveLesson(id).catch(() => showToast('Saved locally. Cloud sync will retry on your next visit.'));
     } else {
       updateProgress();
     }
@@ -571,11 +575,16 @@
         submitted = true;
         const summary = $('.assessment-summary', form);
         const percent = Math.round((score / assessment.questions.length) * 100);
+        const answers = assessment.questions.map((question, index) => {
+          const selected = $(`input[name="${itemId}-${index}"]:checked`, form);
+          return selected ? Number(selected.value) : null;
+        });
         summary.innerHTML = `<strong>Score:</strong> ${score} / ${assessment.questions.length} (${percent}%)<br><span>${answered === assessment.questions.length ? 'Assessment submitted and reviewed. Use the question navigator to inspect each answer.' : `${assessment.questions.length - answered} question(s) remain unanswered. Use the red question numbers to review them.`}</span>`;
         if (answered === assessment.questions.length) markComplete(itemId, true);
         updateAnswered();
         showQuestion(activeQuestion, false);
         showToast(`${assessment.title} submitted. Score: ${score} / ${assessment.questions.length}.`);
+        courseSync?.saveAssessment({ id: itemId, title: assessment.title, score, maxScore: assessment.questions.length, answers }).catch(() => showToast('Score saved locally; cloud score sync is unavailable.'));
       });
 
       $$('[data-reset-assessment]', form).forEach(button => {
@@ -798,5 +807,14 @@
   bindGlobalEvents();
   updateProgress();
   renderItem(0);
+  initializeCourseSync('hazmat-awareness').then((sync) => {
+    courseSync = sync;
+    if (!sync || sync.readOnly) return;
+    sync.remoteCompleted.forEach((id) => completed.add(id));
+    saveProgress();
+    updateProgress();
+    Promise.allSettled([...completed].map((id) => sync.saveLesson(id)));
+    showToast('Your academy progress has been synced.');
+  });
   if (location.hash === '#daily-drill') openDrill();
 })();

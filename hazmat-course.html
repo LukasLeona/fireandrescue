@@ -41,7 +41,7 @@
         </div>
         <div class="top-progress-pill"><span>Progress</span><strong id="courseProgressValue">0%</strong></div>
         <button id="dailyDrillOpen" class="drill-launcher" type="button"><span>Daily Drill</span><strong>+150 XP</strong></button>
-        <a class="btn btn-ghost btn-sm" href="hazmat-awareness.html">Exit course</a>
+        <a class="btn btn-ghost btn-sm" href="dashboard.html">Exit to dashboard</a>
       </div>
     </header>
 
@@ -71,7 +71,7 @@
           </div>
         </div>
         <div id="courseOutline" class="course-outline"></div>
-        <div class="form-note" style="margin-top:24px">Demo progress is stored in this browser only.</div>
+        <div class="form-note course-sync-status" data-course-sync-status data-tone="preview" style="margin-top:24px">Checking academy progress sync…</div>
       </aside>
 
       <button class="player-overlay" id="playerOverlay" type="button" aria-label="Close course outline"></button>
@@ -97,6 +97,6 @@
     </section>
   </div>
   <div class="toast" role="status" aria-live="polite"></div>
-  <script src="assets/js/course-player.js"></script>
+  <script type="module" src="assets/js/course-player.js"></script>
 </body>
 </html>

@@ -262,12 +262,19 @@ language plpgsql security definer
 set search_path = public
 as $$
 declare
-  target_user uuid := coalesce(new.user_id, old.user_id);
-  target_course uuid := coalesce(new.course_id, old.course_id);
+  target_user uuid;
+  target_course uuid;
   expected integer;
   finished integer;
   calculated numeric(5,2);
 begin
+  if tg_op = 'DELETE' then
+    target_user := old.user_id;
+    target_course := old.course_id;
+  else
+    target_user := new.user_id;
+    target_course := new.course_id;
+  end if;
   select greatest(lesson_count, 1) into expected from public.courses where id = target_course;
   select count(*) into finished from public.lesson_progress
     where user_id = target_user and course_id = target_course and completed;
@@ -277,7 +284,8 @@ begin
         status = case when calculated >= 100 then 'completed'::public.enrollment_status else status end,
         completed_at = case when calculated >= 100 then coalesce(completed_at, now()) else completed_at end
     where student_id = target_user and course_id = target_course;
-  return coalesce(new, old);
+  if tg_op = 'DELETE' then return old; end if;
+  return new;
 end;
 $$;
 
@@ -296,8 +304,29 @@ alter table public.notifications enable row level security;
 alter table public.announcements enable row level security;
 alter table public.audit_logs enable row level security;
 
-create policy profiles_select_own_or_staff on public.profiles for select to authenticated
-using (user_id = auth.uid() or public.is_staff());
+create or replace function public.can_view_profile(target_user uuid, target_status public.approval_status, target_requested_role public.app_role)
+returns boolean
+language sql stable security definer
+set search_path = public
+as $$
+  select target_user = auth.uid()
+    or public.current_user_role() in ('super_admin', 'admin')
+    or (
+      public.current_user_role() = 'instructor'
+      and (
+        (target_status = 'pending' and target_requested_role = 'student')
+        or exists (
+          select 1
+          from public.enrollments e
+          join public.course_instructors ci on ci.course_id = e.course_id
+          where e.student_id = target_user and ci.instructor_id = auth.uid()
+        )
+      )
+    )
+$$;
+
+create policy profiles_select_authorized on public.profiles for select to authenticated
+using (public.can_view_profile(user_id, status, requested_role));
 create policy profiles_update_own on public.profiles for update to authenticated
 using (user_id = auth.uid()) with check (user_id = auth.uid());
 
@@ -371,7 +400,8 @@ grant insert on public.quiz_attempts to authenticated;
 grant update on public.notifications to authenticated;
 grant insert, update, delete on public.courses, public.course_instructors, public.announcements to authenticated;
 grant execute on function public.current_user_role(), public.is_approved_user(),
-  public.is_super_admin(), public.is_staff(), public.is_course_instructor(uuid) to authenticated;
+  public.is_super_admin(), public.is_staff(), public.is_course_instructor(uuid),
+  public.can_view_profile(uuid, public.approval_status, public.app_role) to authenticated;
 
 comment on table public.profiles is 'One profile per Supabase Auth user, including approval and role state.';
 comment on table public.audit_logs is 'Immutable server-written record of privileged account actions.';

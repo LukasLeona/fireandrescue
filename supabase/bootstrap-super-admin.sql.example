@@ -1,0 +1,16 @@
+-- Run only after the owner has registered through register.html and verified email.
+-- Replace the placeholder with the exact owner email before running.
+-- The unique partial index in migration 001 guarantees there can be only one Super Admin.
+
+update public.profiles
+set role = 'super_admin',
+    requested_role = 'super_admin',
+    status = 'approved',
+    approved_at = now(),
+    rejection_reason = null
+where lower(email) = lower('OWNER_EMAIL@example.com');
+
+-- This must return exactly one row before the academy is opened to applicants.
+select user_id, email, full_name, role, status, approved_at
+from public.profiles
+where role = 'super_admin';

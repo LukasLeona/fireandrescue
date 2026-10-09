@@ -114,9 +114,11 @@ async function setInvitationPassword(form) {
     const supabase = await getSupabase();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('This invitation link is invalid or has expired. Ask an administrator for a new invitation.');
-    const password = new FormData(form).get('password');
-    const { error } = await supabase.auth.updateUser({ password });
+    const values = Object.fromEntries(new FormData(form));
+    const { error } = await supabase.auth.updateUser({ password: values.password, data: { full_name: values.full_name.trim(), organization: values.organization.trim() } });
     if (error) throw error;
+    const { error: profileError } = await supabase.from('profiles').update({ full_name: values.full_name.trim(), organization: values.organization.trim() }).eq('user_id', session.user.id);
+    if (profileError) throw profileError;
     window.location.replace('dashboard.html');
   } catch (error) { showMessage(form, friendlyError(error)); setSubmitting(form, false); }
 }

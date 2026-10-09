@@ -107,8 +107,26 @@ async function finishCallback() {
   } catch (error) { message.textContent = friendlyError(error); fallback.hidden = false; }
 }
 
+async function setInvitationPassword(form) {
+  if (!form.reportValidity()) return;
+  setSubmitting(form, true);
+  try {
+    const supabase = await getSupabase();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('This invitation link is invalid or has expired. Ask an administrator for a new invitation.');
+    const password = new FormData(form).get('password');
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+    window.location.replace('dashboard.html');
+  } catch (error) { showMessage(form, friendlyError(error)); setSubmitting(form, false); }
+}
+
 if (page === 'register' || page === 'login') {
   const form = document.querySelector('[data-auth-form]');
   form.addEventListener('submit', (event) => { event.preventDefault(); page === 'register' ? register(form) : login(form); });
 } else if (page === 'status') showStatus();
 else if (page === 'callback') finishCallback();
+else if (page === 'set-password') {
+  const form = document.querySelector('[data-auth-form]');
+  form.addEventListener('submit', (event) => { event.preventDefault(); setInvitationPassword(form); });
+}

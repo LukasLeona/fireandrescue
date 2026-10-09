@@ -5,7 +5,7 @@ export default function handler(request, response) {
   }
 
   const url = process.env.SUPABASE_URL;
-  const anonKey = process.env.SUPABASE_ANON_KEY;
+  const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
 
   if (!url || !anonKey) {
     return response.status(503).json({

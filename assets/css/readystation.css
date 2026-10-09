@@ -1067,6 +1067,7 @@ h1, h2, h3, .player-course-title, .stat-card strong {
 .table-badge[data-tone="pending"], .table-badge[data-tone="sent"] { background: #fff0c4; color: #725311; }.table-badge[data-tone="approved"], .table-badge[data-tone="accepted"] { background: #ddf3e5; color: #245e3a; }.table-badge[data-tone="rejected"], .table-badge[data-tone="suspended"], .table-badge[data-tone="revoked"] { background: #ffe0dc; color: #8b2b20; }.table-badge[data-tone="super_admin"], .table-badge[data-tone="admin"] { background: #e0e9ff; color: #244b96; }.table-badge[data-tone="instructor"] { background: #efe5ff; color: #62408e; }
 .table-select { height: 34px; padding: 0 25px 0 8px; border: 1px solid #d3dcda; border-radius: 6px; background: #fff; color: var(--green-900); font-size: 10px; }
 .table-actions { display: flex; gap: 5px; }.action-button { min-height: 30px; padding: 6px 8px; border: 1px solid #d0d9d6; border-radius: 5px; background: #fff; color: var(--green-900); font-size: 9px; font-weight: 800; text-transform: uppercase; }.action-button.is-approve { border-color: #8dc8a2; color: #245d39; }.action-button.is-reject { border-color: #e1aaa2; color: #8b2b20; }.action-button:disabled, .table-select:disabled { opacity: .5; cursor: wait; }
+.form-group-left { text-align: left; }
 
 @media (prefers-reduced-motion: reduce) {
   .hero-backdrop, .hero-scroll i::after, .rs-bot-toggle::before { animation: none !important; }

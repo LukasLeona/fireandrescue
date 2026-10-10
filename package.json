@@ -1,14 +1,28 @@
 {
   "name": "fire-and-rescue-academy",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "type": "module",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
-    "check": "node scripts/check-site.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "check": "tsc --noEmit && node scripts/check-site.mjs",
     "test": "node --test tests/authz.test.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.57.4",
-    "resend": "^6.1.0"
+    "@supabase/supabase-js": "2.117.3",
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "resend": "6.32.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "7.0.2"
   }
 }

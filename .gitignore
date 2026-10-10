@@ -1,5 +1,9 @@
 node_modules/
+.next/
+out/
+*.tsbuildinfo
 .env
 .env.*.local
 .vercel/
+supabase/.temp/
 npm-debug.log*

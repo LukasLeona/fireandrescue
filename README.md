@@ -1,37 +1,71 @@
 # Fire and Rescue Academy LMS
 
-Fire and Rescue Academy is a static-first training website with a Supabase-backed account approval workflow and LMS. It includes role-aware dashboards, invitations, enrollment, course progress, assessments, rankings, audit logging, and optional approval email delivery.
+Fire and Rescue Academy is a Next.js LMS for emergency-response training. It combines public academy pages, a role-based Supabase account workflow, staff and student dashboards, and a gamified HazMat Awareness course.
 
-## Roles and permissions
+## Application features
 
-| Role | Access |
-| --- | --- |
-| Super Admin | The single protected owner account. Reviews every role, assigns roles, invites staff or students, suspends/restores accounts, sees all courses and audit events. |
-| Admin | Reviews student applications, invites students, views members, courses, and academy analytics. |
-| Instructor | Reviews student applications, invites students, views assigned course rosters, progress, quiz scores, and rankings. |
-| Student | Enrolls in published courses, completes interactive lessons and quizzes, and sees personal progress. |
+- Responsive React pages for the homepage, academy, catalog, course overview, contact, and policies.
+- Pending-account workflow with email verification and approval status tracking.
+- Exactly one protected `super_admin`, plus `admin`, `instructor`, and `student` roles.
+- Staff application review, invitations, member management, reporting, rankings, and audit history.
+- Student enrollment, lesson completion, quiz attempts, scores, and progress tracking.
+- An interactive HazMat player with 24 supplied course items and 160 supplied questions, XP, ranks, achievements, activities, quiz feedback, and a daily drill.
+- Local course progress for visitors and Supabase cloud sync for approved, enrolled students.
 
-New self-service registrations always begin as `pending`. Admin and instructor accounts cannot approve other staff; only the Super Admin can do that. Database Row Level Security and server-side authorization enforce these rules even if someone modifies the browser interface.
+## Requirements
+
+- Node.js 24
+- A Supabase project
+- A Vercel project for production deployment
+
+## Local development
+
+```bash
+npm install
+npm run dev
+```
+
+Copy the variable names in `.env.example` to `.env.local`. Public Supabase values are served to the browser through `/api/config`; the secret key is only read in server route handlers.
+
+Run all verification before deployment:
+
+```bash
+npm test
+npm run check
+npm run build
+```
 
 ## Supabase setup
 
-1. Create or select the Supabase project for this site.
-2. Open **SQL Editor** and run these files in order:
-   - `supabase/migrations/202610090001_lms_core.sql`
-   - `supabase/migrations/202610090002_seed_catalog.sql`
-   - `supabase/migrations/202610090003_harden_student_writes.sql`
-3. In **Authentication → URL Configuration**, set the Site URL to the production Vercel URL and allow these redirects:
-   - `https://fireandrescueacademy.vercel.app/auth-callback.html`
-   - `https://fireandrescueacademy.vercel.app/set-password.html`
-   - Add matching localhost URLs when developing locally.
-4. Register the owner through `register.html`, verify the email, replace the placeholder in `supabase/bootstrap-super-admin.sql.example`, and run it once. Its final query must return exactly one approved Super Admin.
-5. Keep email confirmation enabled. Customize the confirmation and invitation templates with Fire and Rescue Academy branding if desired.
+Apply these migrations in order:
 
-The frontend uses a publishable key with RLS. Privileged Vercel functions use a server-only secret key. Supabase documents that publishable keys are intended for public clients protected by RLS, while secret/service-role keys must remain on controlled servers: [Supabase API key guidance](https://supabase.com/docs/guides/getting-started/api-keys).
+1. `supabase/migrations/202610090001_lms_core.sql`
+2. `supabase/migrations/202610090002_seed_catalog.sql`
+3. `supabase/migrations/202610090003_harden_student_writes.sql`
 
-## Vercel environment variables
+Set the Authentication Site URL to `https://fireandrescueacademy.vercel.app` and allow these redirect URLs:
 
-Copy the names from `.env.example` into the Vercel project settings:
+- `https://fireandrescueacademy.vercel.app/auth-callback`
+- `https://fireandrescueacademy.vercel.app/set-password`
+- `http://localhost:3000/auth-callback`
+- `http://localhost:3000/set-password`
+
+Register `luke@lukasleona.com`, then use `supabase/bootstrap-super-admin.sql.example` once to promote and protect the owner. Its final query must return exactly one approved Super Admin.
+
+## Roles
+
+| Role | Permissions |
+| --- | --- |
+| Super Admin | Approves every role, assigns roles, invites users, manages account status, and sees all LMS data. |
+| Admin | Reviews and invites students, views members, courses, and academy analytics. |
+| Instructor | Reviews and invites students, views course rosters, progress, quiz scores, and rankings. |
+| Student | Enrolls in published courses, completes training and assessments, and sees personal progress. |
+
+Authorization is enforced by database Row Level Security and server-side checks. A modified browser interface cannot grant additional permissions.
+
+## Vercel configuration
+
+Add these environment variables to Production, Preview, and Development:
 
 ```text
 SUPABASE_URL
@@ -42,33 +76,6 @@ RESEND_API_KEY        # optional
 EMAIL_FROM            # optional
 ```
 
-Legacy Supabase projects can use `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` instead. Never put the secret/service-role value in HTML, browser JavaScript, or Git.
+`vercel.json` declares the Next.js framework, install/build commands, and security headers. `SITE_URL` must be the exact production origin without a trailing slash. Keep secret and service-role values out of client code and Git.
 
-Set `SITE_URL` to the exact deployed origin without a trailing slash. When using Resend, verify the sending domain and set `EMAIL_FROM` to a sender on that domain. Supabase Auth handles invitation links; approval decisions also create in-app notifications, so an email provider outage does not lose the decision.
-
-## Local verification
-
-Use Node.js 20 or newer:
-
-```bash
-npm install
-npm test
-npm run check
-```
-
-`npm test` verifies the role authorization matrix. `npm run check` validates critical pages, local file references, migrations, and the absence of server secrets in client modules.
-
-For local browser testing, serve the repository through a Vercel-compatible development server so `/api/config` and the privileged `/api/*` functions are available. Opening HTML directly from the filesystem cannot run serverless functions.
-
-## Launch checklist
-
-- Confirm all three migrations completed without errors.
-- Confirm exactly one row has `role = 'super_admin'`.
-- Confirm Supabase email confirmation and redirect URLs.
-- Confirm the Vercel environment variables in Production and Preview.
-- Test a new student application, approval, login, enrollment, lesson completion, quiz submission, and instructor ranking.
-- Test that an instructor/admin cannot approve a staff-role request.
-- Configure Resend if approval email delivery is required.
-- Review Supabase Security Advisor findings and Vercel function logs before launch.
-
-The API verifies access tokens using `auth.getUser(token)` before applying role checks, following [Supabase's authenticated server-request guidance](https://supabase.com/docs/reference/javascript/auth-getuser). Invitations use the documented [`inviteUserByEmail`](https://supabase.com/docs/reference/javascript/auth-admin-inviteuserbyemail) admin operation.
+Legacy `.html` addresses permanently redirect to their current Next.js routes so existing links continue to work.

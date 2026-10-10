@@ -8,7 +8,7 @@ import { PublicShell } from '@/components/site/PublicShell';
 import { catalogCourses } from '@/lib/catalog';
 
 export const metadata: Metadata = {
-  title: 'Fire and Rescue Academy | Professional Firefighter Training',
+  title: { absolute: 'Fire and Rescue Academy | Professional Firefighter Training' },
   description: 'Interactive online training for firefighters and emergency-response professionals.',
   alternates: { canonical: '/' }
 };
@@ -29,8 +29,8 @@ export default function HomePage() {
           <div className="hero-shade" aria-hidden="true" />
           <div className="hero-rail" aria-hidden="true"><span>TRAIN</span><span>PREPARE</span><span>RESPOND</span></div>
           <div className="container hero-stage">
-            <div className="hero-copy" data-reveal><span className="eyebrow">Professional fire-service learning</span><h1 id="hero-title">Ready for the call.<br /><span>Built in the academy.</span></h1><p>Focused online training for firefighters and emergency-response professionals, with practical scenarios, immediate feedback, and visible progress.</p><div className="hero-actions"><Link className="btn btn-primary" href="/courses">Explore free courses →</Link><Link className="btn btn-hero-quiet" href="/hazmat-course">Experience HazMat Awareness ▶</Link></div></div>
-            <div className="hero-mission" data-reveal><span className="mission-number">01</span><div><strong>Current training mission</strong><Link href="/hazmat-course">Recognize the hazard. Protect the scene. Make the safe call.</Link></div></div>
+            <div className="hero-copy"><span className="eyebrow">Professional fire-service learning</span><h1 id="hero-title">Ready for the call.<br /><span>Built in the academy.</span></h1><p>Focused online training for firefighters and emergency-response professionals, with practical scenarios, immediate feedback, and visible progress.</p><div className="hero-actions"><Link className="btn btn-primary" href="/courses">Explore free courses →</Link><Link className="btn btn-hero-quiet" href="/hazmat-course">Experience HazMat Awareness ▶</Link></div></div>
+            <div className="hero-mission"><span className="mission-number">01</span><div><strong>Current training mission</strong><Link href="/hazmat-course">Recognize the hazard. Protect the scene. Make the safe call.</Link></div></div>
           </div>
           <a className="hero-scroll" href="#pathways"><span>Scroll to explore</span><i aria-hidden="true" /></a>
         </section>

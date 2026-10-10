@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canInvite, canManageUser, canReviewApplication } from '../api/_authz.js';
+import { canInvite, canManageUser, canReviewApplication } from '../lib/authz.ts';
 
 test('only the super admin can invite staff roles', () => {
   assert.equal(canInvite('super_admin', 'admin'), true);

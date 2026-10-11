@@ -13,7 +13,7 @@ export function CommandPreview() {
   const current = modes[mode];
   return (
     <div className="command-console" data-reveal>
-      <div className="console-head"><div className="console-profile"><span className="console-avatar">FR</span><span><strong>Demo learner</strong><small>Rank: Recruit</small></span></div><div className="console-xp"><small>Training XP</small><strong>450</strong></div></div>
+      <div className="console-head"><div className="console-profile"><span className="console-avatar">FR</span><span><strong>Academy learner</strong><small>Rank: Recruit</small></span></div><div className="console-xp"><small>Training XP</small><strong>450</strong></div></div>
       <div className="console-body">
         <div className="console-tabs" role="tablist" aria-label="Command center preview">
           {(Object.keys(modes) as Array<keyof typeof modes>).map((key) => <button key={key} className={mode === key ? 'active' : ''} type="button" role="tab" aria-selected={mode === key} onClick={() => setMode(key)}>{key === 'drill' ? 'Daily drill' : key[0].toUpperCase() + key.slice(1)}</button>)}

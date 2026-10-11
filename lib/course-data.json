@@ -12,25 +12,25 @@
           "type": "lesson",
           "title": "Course introduction",
           "subtitle": "Welcome to Fire and Rescue Academy",
-          "description": "A structured HazMat Awareness demo for firefighters that turns the uploaded source material into focused sections, checkpoints, quizzes, and tests.",
+          "description": "A structured HazMat Awareness course for firefighters that turns the supplied source material into focused sections, checkpoints, quizzes, and tests.",
           "image": "assets/images/hazmat-training-photo.png",
           "blocks": [
             {
               "title": "What this course covers",
-              "body": "<p>This demo follows the uploaded chapter materials for <strong>Introduction to Hazardous Materials</strong>, <strong>Recognize and Identify the Presence of Hazmat</strong>, and <strong>Initiate Protective Actions</strong>. The outline intentionally mirrors a learning-management flow: course intro, chapter sections, quiz, and test.</p>"
+              "body": "<p>This course follows the supplied chapter materials for <strong>Introduction to Hazardous Materials</strong>, <strong>Recognize and Identify the Presence of Hazmat</strong>, and <strong>Initiate Protective Actions</strong>. The outline uses a learning-management flow: course intro, chapter sections, quiz, and test.</p>"
             },
             {
               "title": "Learning approach",
               "body": "<ul class=\"key-points\"><li>Short sections rather than a single long reading page</li><li>Interactive checks, drag-and-drop, and matching activities</li><li>Chapter quizzes and tests based on the uploaded question files</li><li>Progress bar and completion tracking inside the course sidebar</li></ul>"
             },
             {
-              "title": "Remember the boundary of this demo",
-              "body": "<div class=\"callout\"><strong>Important:</strong> This course player is a web demo. It does not replace agency-approved practical evaluation, local SOPs, or instructor-led skills verification.</div>"
+              "title": "Remember the boundary of this course",
+              "body": "<div class=\"callout\"><strong>Important:</strong> This online course does not replace agency-approved practical evaluation, local SOPs, or instructor-led skills verification.</div>"
             }
           ],
           "activity": {
             "type": "quickCheck",
-            "prompt": "What is the main goal of this Fire and Rescue Academy demo course?",
+            "prompt": "What is the main goal of this Fire and Rescue Academy course?",
             "options": [
               {
                 "text": "To function as a passive PDF reader only",
@@ -45,7 +45,7 @@
                 "correct": false
               }
             ],
-            "correctMessage": "Correct. The goal is a clean, interactive LMS demo built around firefighter training content.",
+            "correctMessage": "Correct. The goal is a structured, interactive LMS course built around firefighter training content.",
             "wrongMessage": "Review the course introduction. Fire and Rescue Academy is meant to be interactive, not just a reading site."
           }
         }

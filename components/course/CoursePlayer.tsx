@@ -64,7 +64,7 @@ export function CoursePlayer() {
     (async () => {
       try {
         const { supabase, session, profile } = await getSessionProfile();
-        if (!session) { setSyncStatus({ text: 'Preview mode · Log in and enroll to save progress across devices.', tone: 'preview' }); return; }
+        if (!session) { setSyncStatus({ text: 'Guest mode · Log in and enroll to save progress across devices.', tone: 'preview' }); return; }
         if (!profile || profile.status !== 'approved') { setSyncStatus({ text: 'Your application must be approved before training progress can be recorded.', tone: 'warning' }); return; }
         const { data: remoteCourse, error: courseError } = await supabase.from('courses').select('id,slug,title').eq('slug', 'hazmat-awareness').single();
         if (courseError) throw courseError;

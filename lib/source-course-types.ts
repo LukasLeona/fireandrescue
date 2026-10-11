@@ -35,6 +35,8 @@ export type SourceCourseMeta = {
   eyebrow: string;
   description: string;
   cover: string;
+  illustration: string;
+  illustrationAlt: string;
   accent: 'inspection' | 'instruction';
   moduleNames: string[];
 };

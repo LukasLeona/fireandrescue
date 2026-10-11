@@ -9,7 +9,9 @@ const metadata: Record<SourceCourseSlug, SourceCourseMeta> = {
   'fire-inspector-1': {
     eyebrow: 'Fire prevention curriculum',
     description: 'Duties and authority, fire dynamics, construction, occupancy, egress, site access, hazard recognition, water systems, and fire suppression systems.',
-    cover: '/assets/images/course-covers/fire-inspector.jpg',
+    cover: '/assets/images/course-covers/fire-inspector.png',
+    illustration: '/assets/images/course-illustrations/fire-inspector-visual.png',
+    illustrationAlt: 'Fire inspector reviewing an exit, emergency light, and extinguisher during a building inspection',
     accent: 'inspection',
     moduleNames: [
       'Duties & Authority',
@@ -29,7 +31,9 @@ const metadata: Record<SourceCourseSlug, SourceCourseMeta> = {
   'fire-instructor-1': {
     eyebrow: 'NFPA 1041 course',
     description: 'Professional instructor responsibilities, learning principles, planning, instructional materials, learning environments, classroom delivery, student interaction, skills training, testing, and records.',
-    cover: '/assets/images/course-covers/fire-instructor.jpg',
+    cover: '/assets/images/course-covers/fire-instructor.png',
+    illustration: '/assets/images/course-illustrations/fire-instructor-visual.png',
+    illustrationAlt: 'Fire service instructor guiding a classroom equipment demonstration',
     accent: 'instruction',
     moduleNames: [
       'The Instructor as a Professional',

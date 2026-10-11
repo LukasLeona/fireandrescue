@@ -147,7 +147,7 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
             <nav className="source-breadcrumb" aria-label="Course location"><span>{course.title}</span><span>/</span><span>Module {moduleIndex + 1}</span><span>/</span><span>Slide {slide.number}</span></nav>
             <section className="source-module-hero">
               <div><span className="eyebrow">Module {String(moduleIndex + 1).padStart(2, '0')}</span><h1>{moduleName}</h1><p>Source module: {module.sourceFile}</p></div>
-              <span className="source-module-xp">+250 XP</span>
+              <div className="source-module-visual"><img src={course.meta.illustration} alt={course.meta.illustrationAlt} /><span className="source-module-xp">+250 XP</span></div>
             </section>
 
             <div className="source-mode-tabs" role="tablist" aria-label="Module views"><button className={mode === 'lesson' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'lesson'} onClick={() => setMode('lesson')}>Source lesson</button><button className={mode === 'practice' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'practice'} onClick={() => setMode('practice')}>Practice · up to 75 XP</button>{tests.length > 0 && <button className={mode === 'test' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'test'} onClick={() => setMode('test')}>Course tests</button>}</div>

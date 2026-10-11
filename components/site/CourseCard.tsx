@@ -4,7 +4,7 @@ import type { CatalogCourse } from '@/lib/catalog';
 export function CourseCard({ course }: { course: CatalogCourse }) {
   return (
     <article className="course-card" data-category={course.category} data-reveal>
-      <div className="course-cover"><img src={course.image} alt={`${course.title} course cover`} /><span className="course-pill">100% Free</span></div>
+      <div className="course-cover"><img src={course.image} alt={`${course.title} course cover`} /><span className="course-pill">{course.available ? 'Available now' : 'Coming soon'}</span></div>
       <div className="course-body">
         <div className="course-meta"><span>▤ {course.lessons}</span><span>◷ {course.duration}</span></div>
         <h3><Link href={course.href}>{course.title}</Link></h3><p>{course.description}</p>

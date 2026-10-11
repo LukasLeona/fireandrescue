@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Brand } from '@/components/site/Brand';
 import type { SourceCourseDefinition, SourceModule } from '@/lib/source-course-types';
+import { getSourceCourseTests } from '@/lib/source-course-tests';
+import { SourceCourseAssessment, type SourceTestResult } from './SourceCourseAssessment';
 import { SourceModulePractice } from './SourceModulePractice';
 
 function moduleStorageKey(slug: string) {
@@ -12,6 +14,10 @@ function moduleStorageKey(slug: string) {
 
 function practiceStorageKey(slug: string) {
   return `fire-rescue-academy-${slug}-practice-v1`;
+}
+
+function testStorageKey(slug: string) {
+  return `fire-rescue-academy-${slug}-tests-v1`;
 }
 
 function nearestVisual(module: SourceModule, slideNumber: number) {
@@ -23,7 +29,9 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
   const [slideIndex, setSlideIndex] = useState(0);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [practiceScores, setPracticeScores] = useState<Record<string, number>>({});
-  const [mode, setMode] = useState<'lesson' | 'practice'>('lesson');
+  const [testScores, setTestScores] = useState<Record<string, number>>({});
+  const [activeTest, setActiveTest] = useState(0);
+  const [mode, setMode] = useState<'lesson' | 'practice' | 'test'>('lesson');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useState('');
   const toastTimer = useRef<number | null>(null);
@@ -33,6 +41,7 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
   const visual = nearestVisual(module, slide.number);
   const overallSlide = useMemo(() => course.modules.slice(0, moduleIndex).reduce((total, entry) => total + entry.slideCount, 0) + slideIndex + 1, [course.modules, moduleIndex, slideIndex]);
   const completionPercent = Math.round(completed.size / course.modules.length * 100);
+  const tests = getSourceCourseTests(course.slug as Parameters<typeof getSourceCourseTests>[0]);
 
   const showToast = useCallback((message: string) => {
     setToast(message);
@@ -46,6 +55,7 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
       const saved = JSON.parse(localStorage.getItem(moduleStorageKey(course.slug)) || '[]') as string[];
       setCompleted(new Set(saved));
       setPracticeScores(JSON.parse(localStorage.getItem(practiceStorageKey(course.slug)) || '{}') as Record<string, number>);
+      setTestScores(JSON.parse(localStorage.getItem(testStorageKey(course.slug)) || '{}') as Record<string, number>);
     } catch {
       setCompleted(new Set());
     }
@@ -65,6 +75,20 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
     setPracticeScores(next);
     localStorage.setItem(practiceStorageKey(course.slug), JSON.stringify(next));
     showToast(`Module exercise complete. Best score: ${next[module.id]} XP`);
+  };
+
+  const finishTest = (result: SourceTestResult) => {
+    const next = { ...testScores, [result.id]: Math.max(testScores[result.id] || 0, result.percent) };
+    setTestScores(next);
+    localStorage.setItem(testStorageKey(course.slug), JSON.stringify(next));
+    showToast(`${result.title} submitted. Score: ${result.score}/${result.maxScore}.`);
+  };
+
+  const openTest = (index: number) => {
+    setActiveTest(index);
+    setMode('test');
+    setSidebarOpen(false);
+    document.querySelector('.source-reader')?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const markModuleComplete = () => {
@@ -97,7 +121,7 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
         <button className="source-menu-button" type="button" aria-label="Open course outline" onClick={() => setSidebarOpen((value) => !value)}>☰</button>
         <Brand />
         <div className="source-course-identity"><small>{course.meta.eyebrow}</small><strong>{course.title}</strong></div>
-        <div className="source-course-stats"><span><small>Training XP</small><strong>{completed.size * 250 + Object.values(practiceScores).reduce((total, value) => total + value, 0)}</strong></span><span><small>Modules</small><strong>{completed.size}/{course.moduleCount}</strong></span><span className="source-progress-chip">{completionPercent}%</span></div>
+        <div className="source-course-stats"><span><small>Training XP</small><strong>{completed.size * 250 + Object.values(practiceScores).reduce((total, value) => total + value, 0) + Object.values(testScores).reduce((total, value) => total + value * 2, 0)}</strong></span><span><small>Modules</small><strong>{completed.size}/{course.moduleCount}</strong></span><span className="source-progress-chip">{completionPercent}%</span></div>
         <Link className="btn btn-ghost btn-sm" href="/dashboard">Exit course</Link>
       </header>
 
@@ -113,6 +137,7 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
               </button>
             ))}
           </nav>
+          {tests.length > 0 && <div className="source-test-list"><span className="eyebrow">Course tests</span>{tests.map((test, index) => <button className={mode === 'test' && activeTest === index ? 'is-active' : ''} type="button" key={test.id} onClick={() => openTest(index)}><span>{testScores[test.id] !== undefined ? `${testScores[test.id]}%` : `T${index + 1}`}</span><strong>{test.title.replace(/^Test \d+: /, '')}</strong></button>)}</div>}
           <div className="source-integrity-note"><strong>Source integrity</strong><p>{course.sourceNotice}</p></div>
         </aside>
         <button className={`source-sidebar-scrim${sidebarOpen ? ' is-visible' : ''}`} type="button" aria-label="Close course outline" onClick={() => setSidebarOpen(false)} />
@@ -125,9 +150,9 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
               <span className="source-module-xp">+250 XP</span>
             </section>
 
-            <div className="source-mode-tabs" role="tablist" aria-label="Module views"><button className={mode === 'lesson' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'lesson'} onClick={() => setMode('lesson')}>Source lesson</button><button className={mode === 'practice' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'practice'} onClick={() => setMode('practice')}>Practice · up to 75 XP</button></div>
+            <div className="source-mode-tabs" role="tablist" aria-label="Module views"><button className={mode === 'lesson' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'lesson'} onClick={() => setMode('lesson')}>Source lesson</button><button className={mode === 'practice' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'practice'} onClick={() => setMode('practice')}>Practice · up to 75 XP</button>{tests.length > 0 && <button className={mode === 'test' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'test'} onClick={() => setMode('test')}>Course tests</button>}</div>
 
-            {mode === 'lesson' ? <><section className="source-slide-card" aria-live="polite">
+            {mode === 'test' && tests[activeTest] ? <SourceCourseAssessment key={tests[activeTest].id} course={course} test={tests[activeTest]} bestScore={testScores[tests[activeTest].id] || 0} onFinish={finishTest} /> : mode === 'lesson' ? <><section className="source-slide-card" aria-live="polite">
               <div className="source-slide-toolbar"><span>Source slide {slide.number} of {module.slideCount}</span><span>Course screen {overallSlide} of {course.slideCount}</span></div>
               <div className="source-slide-grid">
                 <article className="source-slide-copy">

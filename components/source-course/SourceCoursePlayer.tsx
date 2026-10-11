@@ -4,9 +4,14 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Brand } from '@/components/site/Brand';
 import type { SourceCourseDefinition, SourceModule } from '@/lib/source-course-types';
+import { SourceModulePractice } from './SourceModulePractice';
 
 function moduleStorageKey(slug: string) {
   return `fire-rescue-academy-${slug}-completed-v1`;
+}
+
+function practiceStorageKey(slug: string) {
+  return `fire-rescue-academy-${slug}-practice-v1`;
 }
 
 function nearestVisual(module: SourceModule, slideNumber: number) {
@@ -17,6 +22,8 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
   const [moduleIndex, setModuleIndex] = useState(0);
   const [slideIndex, setSlideIndex] = useState(0);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [practiceScores, setPracticeScores] = useState<Record<string, number>>({});
+  const [mode, setMode] = useState<'lesson' | 'practice'>('lesson');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useState('');
   const toastTimer = useRef<number | null>(null);
@@ -38,6 +45,7 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
     try {
       const saved = JSON.parse(localStorage.getItem(moduleStorageKey(course.slug)) || '[]') as string[];
       setCompleted(new Set(saved));
+      setPracticeScores(JSON.parse(localStorage.getItem(practiceStorageKey(course.slug)) || '{}') as Record<string, number>);
     } catch {
       setCompleted(new Set());
     }
@@ -47,8 +55,16 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
   const openModule = (index: number) => {
     setModuleIndex(index);
     setSlideIndex(0);
+    setMode('lesson');
     setSidebarOpen(false);
     document.querySelector('.source-reader')?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const finishPractice = (score: number) => {
+    const next = { ...practiceScores, [module.id]: Math.max(practiceScores[module.id] || 0, score) };
+    setPracticeScores(next);
+    localStorage.setItem(practiceStorageKey(course.slug), JSON.stringify(next));
+    showToast(`Module exercise complete. Best score: ${next[module.id]} XP`);
   };
 
   const markModuleComplete = () => {
@@ -81,7 +97,7 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
         <button className="source-menu-button" type="button" aria-label="Open course outline" onClick={() => setSidebarOpen((value) => !value)}>☰</button>
         <Brand />
         <div className="source-course-identity"><small>{course.meta.eyebrow}</small><strong>{course.title}</strong></div>
-        <div className="source-course-stats"><span><small>Training XP</small><strong>{completed.size * 250}</strong></span><span><small>Modules</small><strong>{completed.size}/{course.moduleCount}</strong></span><span className="source-progress-chip">{completionPercent}%</span></div>
+        <div className="source-course-stats"><span><small>Training XP</small><strong>{completed.size * 250 + Object.values(practiceScores).reduce((total, value) => total + value, 0)}</strong></span><span><small>Modules</small><strong>{completed.size}/{course.moduleCount}</strong></span><span className="source-progress-chip">{completionPercent}%</span></div>
         <Link className="btn btn-ghost btn-sm" href="/dashboard">Exit course</Link>
       </header>
 
@@ -109,7 +125,9 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
               <span className="source-module-xp">+250 XP</span>
             </section>
 
-            <section className="source-slide-card" aria-live="polite">
+            <div className="source-mode-tabs" role="tablist" aria-label="Module views"><button className={mode === 'lesson' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'lesson'} onClick={() => setMode('lesson')}>Source lesson</button><button className={mode === 'practice' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'practice'} onClick={() => setMode('practice')}>Practice · up to 75 XP</button></div>
+
+            {mode === 'lesson' ? <><section className="source-slide-card" aria-live="polite">
               <div className="source-slide-toolbar"><span>Source slide {slide.number} of {module.slideCount}</span><span>Course screen {overallSlide} of {course.slideCount}</span></div>
               <div className="source-slide-grid">
                 <article className="source-slide-copy">
@@ -125,7 +143,7 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
             </section>
 
             <div className="source-slide-jump"><label htmlFor="source-slide-range">Slide navigator</label><input id="source-slide-range" type="range" min="1" max={module.slides.length} value={slideIndex + 1} onChange={(event) => setSlideIndex(Number(event.target.value) - 1)} /><strong>{slideIndex + 1}/{module.slides.length}</strong></div>
-            <div className="source-reader-actions"><button className="btn btn-ghost" type="button" onClick={goPrevious} disabled={moduleIndex === 0 && slideIndex === 0}>Previous</button><button className="btn btn-secondary" type="button" onClick={markModuleComplete}>{completed.has(module.id) ? 'Module completed' : 'Mark module complete'}</button><button className="btn btn-primary" type="button" onClick={goNext}>{moduleIndex === course.modules.length - 1 && slideIndex === module.slides.length - 1 ? 'Complete course reading' : 'Next'}</button></div>
+            <div className="source-reader-actions"><button className="btn btn-ghost" type="button" onClick={goPrevious} disabled={moduleIndex === 0 && slideIndex === 0}>Previous</button><button className="btn btn-secondary" type="button" onClick={markModuleComplete}>{completed.has(module.id) ? 'Module completed' : 'Mark module complete'}</button><button className="btn btn-primary" type="button" onClick={goNext}>{moduleIndex === course.modules.length - 1 && slideIndex === module.slides.length - 1 ? 'Complete course reading' : 'Next'}</button></div></> : <SourceModulePractice module={module} moduleName={moduleName} previousBest={practiceScores[module.id] || 0} onFinish={finishPractice} />}
           </div>
         </main>
       </div>

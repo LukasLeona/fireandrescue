@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { CoursePlayer } from '@/components/course/CoursePlayer';
+import { CourseAccessGate } from '@/components/courses/CourseAccessGate';
 import { SourceCoursePlayer } from '@/components/source-course/SourceCoursePlayer';
 import { getSourceCourse, isSourceCourseSlug, sourceCourseSlugs } from '@/lib/source-courses';
 
@@ -18,7 +19,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function SourceCoursePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  if (slug === 'hazmat-awareness') return <CoursePlayer />;
+  if (slug === 'hazmat-awareness') return <CourseAccessGate courseSlug={slug} courseTitle="HazMat Awareness"><CoursePlayer /></CourseAccessGate>;
   if (!isSourceCourseSlug(slug)) notFound();
-  return <SourceCoursePlayer course={getSourceCourse(slug)} />;
+  const course = getSourceCourse(slug);
+  return <CourseAccessGate courseSlug={slug} courseTitle={course.title}><SourceCoursePlayer course={course} /></CourseAccessGate>;
 }

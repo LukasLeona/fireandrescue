@@ -40,7 +40,9 @@ export function AuthAccessForm({ mode }: { mode: 'login' | 'register' }) {
         const { error } = await supabase.auth.signInWithPassword({ email: String(values.email).trim(), password: String(values.password) });
         if (error) throw error;
         const { profile } = await getSessionProfile();
-        window.location.assign(profile?.status === 'approved' ? '/dashboard' : '/application-status');
+        const requestedNext = new URLSearchParams(window.location.search).get('next');
+        const safeNext = requestedNext?.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : '/dashboard';
+        window.location.assign(profile?.status === 'approved' ? safeNext : '/application-status');
       }
     } catch (error) {
       setMessage(friendlyError(error));

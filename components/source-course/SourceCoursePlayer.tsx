@@ -2,46 +2,50 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CourseSyncStatus } from '@/components/course/CourseSyncStatus';
 import { Brand } from '@/components/site/Brand';
-import type { SourceCourseDefinition, SourceModule } from '@/lib/source-course-types';
-import { getSourceCourseTests } from '@/lib/source-course-tests';
-import { SourceCourseAssessment, type SourceTestResult } from './SourceCourseAssessment';
-import { SourceModulePractice } from './SourceModulePractice';
+import { buildSourceLessonOutline, type SourceLessonItem } from '@/lib/source-course-outline';
+import type { SourceCourseDefinition, SourceSlide } from '@/lib/source-course-types';
 
-function moduleStorageKey(slug: string) {
-  return `fire-rescue-academy-${slug}-completed-v1`;
+const storageVersion = 'unified-v1';
+
+function progressStorageKey(slug: string) {
+  return `fire-rescue-academy-${slug}-${storageVersion}-progress`;
 }
 
-function practiceStorageKey(slug: string) {
-  return `fire-rescue-academy-${slug}-practice-v1`;
+function chapterStorageKey(slug: string) {
+  return `fire-rescue-academy-${slug}-${storageVersion}-chapters`;
 }
 
-function testStorageKey(slug: string) {
-  return `fire-rescue-academy-${slug}-tests-v1`;
+function slideBody(slide: SourceSlide) {
+  return slide.content.filter((block, index) => block.trim() && (index !== 0 || block.trim() !== slide.title.trim()));
 }
 
-function nearestVisual(module: SourceModule, slideNumber: number) {
-  return module.visuals.reduce((nearest, visual) => Math.abs(visual.slide - slideNumber) < Math.abs(nearest.slide - slideNumber) ? visual : nearest, module.visuals[0]);
+function SourceLessonCards({ item }: { item: SourceLessonItem }) {
+  return <>{item.slides.map((slide, index) => {
+    const body = slideBody(slide);
+    const title = slide.title.trim();
+    if (!title && !body.length && !slide.notes.length) return null;
+    return <section className="lesson-card source-reformatted-card" key={`${item.id}-${slide.number}`}><div className="source-reformatted-heading"><span>Topic {String(index + 1).padStart(2, '0')}</span>{title && <h3>{title}</h3>}</div>{body.length > 0 && <div className="source-reformatted-copy">{body.map((block, blockIndex) => <p key={blockIndex}>{block}</p>)}</div>}{slide.notes.length > 0 && <details className="source-notes"><summary>Instructor notes</summary>{slide.notes.map((note, noteIndex) => <p key={noteIndex}>{note}</p>)}</details>}</section>;
+  })}</>;
 }
 
 export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition }) {
-  const [moduleIndex, setModuleIndex] = useState(0);
-  const [slideIndex, setSlideIndex] = useState(0);
+  const chapters = useMemo(() => buildSourceLessonOutline(course), [course]);
+  const flatItems = useMemo(() => chapters.flatMap((chapter) => chapter.items.map((item) => ({ ...item, chapterId: chapter.id, chapterHeading: chapter.title, chapterSubtitle: chapter.subtitle }))), [chapters]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
-  const [practiceScores, setPracticeScores] = useState<Record<string, number>>({});
-  const [testScores, setTestScores] = useState<Record<string, number>>({});
-  const [activeTest, setActiveTest] = useState(0);
-  const [mode, setMode] = useState<'lesson' | 'practice' | 'test'>('lesson');
+  const completedRef = useRef(completed);
+  const [openChapters, setOpenChapters] = useState<Set<string>>(new Set(chapters.map((chapter) => chapter.id)));
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useState('');
   const toastTimer = useRef<number | null>(null);
-  const module = course.modules[moduleIndex];
-  const slide = module.slides[slideIndex];
-  const moduleName = course.meta.moduleNames[moduleIndex] || module.title;
-  const visual = nearestVisual(module, slide.number);
-  const overallSlide = useMemo(() => course.modules.slice(0, moduleIndex).reduce((total, entry) => total + entry.slideCount, 0) + slideIndex + 1, [course.modules, moduleIndex, slideIndex]);
-  const completionPercent = Math.round(completed.size / course.modules.length * 100);
-  const tests = getSourceCourseTests(course.slug as Parameters<typeof getSourceCourseTests>[0]);
+  const mainRef = useRef<HTMLElement | null>(null);
+  const current = flatItems[currentIndex];
+  const percent = Math.round(completed.size / flatItems.length * 100) || 0;
+  const xp = completed.size * 100;
+  const rank = percent >= 100 ? 'Mission Ready' : percent >= 75 ? 'Specialist' : percent >= 40 ? 'Responder' : percent > 0 ? 'Recruit' : 'Rookie';
+  const badges = [completed.size >= 1, percent >= 25, percent >= 50, percent >= 75, percent >= 100];
 
   const showToast = useCallback((message: string) => {
     setToast(message);
@@ -49,130 +53,49 @@ export function SourceCoursePlayer({ course }: { course: SourceCourseDefinition 
     toastTimer.current = window.setTimeout(() => setToast(''), 3200);
   }, []);
 
+  useEffect(() => { completedRef.current = completed; }, [completed]);
   useEffect(() => {
-    document.body.classList.add('source-course-body');
+    document.body.classList.add('player-body');
     try {
-      const saved = JSON.parse(localStorage.getItem(moduleStorageKey(course.slug)) || '[]') as string[];
-      setCompleted(new Set(saved));
-      setPracticeScores(JSON.parse(localStorage.getItem(practiceStorageKey(course.slug)) || '{}') as Record<string, number>);
-      setTestScores(JSON.parse(localStorage.getItem(testStorageKey(course.slug)) || '{}') as Record<string, number>);
+      const local = JSON.parse(localStorage.getItem(progressStorageKey(course.slug)) || '[]') as string[];
+      const storedChapters = JSON.parse(localStorage.getItem(chapterStorageKey(course.slug)) || '[]') as string[];
+      setCompleted(new Set(local));
+      if (storedChapters.length) setOpenChapters(new Set(storedChapters));
     } catch {
       setCompleted(new Set());
     }
-    return () => document.body.classList.remove('source-course-body');
+    return () => document.body.classList.remove('player-body');
   }, [course.slug]);
 
-  const openModule = (index: number) => {
-    setModuleIndex(index);
-    setSlideIndex(0);
-    setMode('lesson');
+  const chooseItem = (index: number) => {
+    setCurrentIndex(index);
     setSidebarOpen(false);
-    document.querySelector('.source-reader')?.scrollTo({ top: 0, behavior: 'smooth' });
+    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const finishPractice = (score: number) => {
-    const next = { ...practiceScores, [module.id]: Math.max(practiceScores[module.id] || 0, score) };
-    setPracticeScores(next);
-    localStorage.setItem(practiceStorageKey(course.slug), JSON.stringify(next));
-    showToast(`Module exercise complete. Best score: ${next[module.id]} XP`);
+  const toggleChapter = (id: string) => {
+    setOpenChapters((currentSet) => {
+      const next = new Set(currentSet);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem(chapterStorageKey(course.slug), JSON.stringify([...next]));
+      return next;
+    });
   };
 
-  const finishTest = (result: SourceTestResult) => {
-    const next = { ...testScores, [result.id]: Math.max(testScores[result.id] || 0, result.percent) };
-    setTestScores(next);
-    localStorage.setItem(testStorageKey(course.slug), JSON.stringify(next));
-    showToast(`${result.title} submitted. Score: ${result.score}/${result.maxScore}.`);
-  };
-
-  const openTest = (index: number) => {
-    setActiveTest(index);
-    setMode('test');
-    setSidebarOpen(false);
-    document.querySelector('.source-reader')?.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const markModuleComplete = () => {
-    const next = new Set(completed).add(module.id);
+  const markComplete = useCallback((id: string, quiet = false) => {
+    if (completedRef.current.has(id)) return;
+    const next = new Set(completedRef.current).add(id);
+    completedRef.current = next;
     setCompleted(next);
-    localStorage.setItem(moduleStorageKey(course.slug), JSON.stringify([...next]));
-    showToast(`Module complete. +250 training XP`);
+    localStorage.setItem(progressStorageKey(course.slug), JSON.stringify([...next]));
+    showToast(quiet ? '+100 XP. Training progress saved.' : '+100 XP. Lesson item complete.');
+  }, [course.slug, showToast]);
+
+  const next = () => {
+    markComplete(current.id, true);
+    if (currentIndex < flatItems.length - 1) chooseItem(currentIndex + 1);
+    else showToast(`Mission complete. You reached the end of ${course.title}.`);
   };
 
-  const goPrevious = () => {
-    if (slideIndex > 0) { setSlideIndex(slideIndex - 1); return; }
-    if (moduleIndex > 0) {
-      const previousModule = course.modules[moduleIndex - 1];
-      setModuleIndex(moduleIndex - 1);
-      setSlideIndex(previousModule.slides.length - 1);
-    }
-  };
-
-  const goNext = () => {
-    if (slideIndex < module.slides.length - 1) { setSlideIndex(slideIndex + 1); return; }
-    markModuleComplete();
-    if (moduleIndex < course.modules.length - 1) openModule(moduleIndex + 1);
-  };
-
-  const bodyBlocks = slide.content.filter((block, index) => index !== 0 || block.trim() !== slide.title.trim());
-
-  return (
-    <div className={`source-course-shell source-theme-${course.meta.accent}`}>
-      <header className="source-course-topbar">
-        <button className="source-menu-button" type="button" aria-label="Open course outline" onClick={() => setSidebarOpen((value) => !value)}>☰</button>
-        <Brand />
-        <div className="source-course-identity"><small>{course.meta.eyebrow}</small><strong>{course.title}</strong></div>
-        <div className="source-course-stats"><span><small>Training XP</small><strong>{completed.size * 250 + Object.values(practiceScores).reduce((total, value) => total + value, 0) + Object.values(testScores).reduce((total, value) => total + value * 2, 0)}</strong></span><span><small>Modules</small><strong>{completed.size}/{course.moduleCount}</strong></span><span className="source-progress-chip">{completionPercent}%</span></div>
-        <Link className="btn btn-ghost btn-sm" href="/dashboard">Exit course</Link>
-      </header>
-
-      <div className="source-course-layout">
-        <aside className={`source-course-sidebar${sidebarOpen ? ' is-open' : ''}`}>
-          <div className="source-sidebar-heading"><span className="eyebrow">Course curriculum</span><h2>{course.title}</h2><p>{course.moduleCount} modules · {course.slideCount.toLocaleString()} source slides</p></div>
-          <div className="source-progress"><div><span>Course progress</span><strong>{completionPercent}%</strong></div><div className="progress-track"><span style={{ width: `${completionPercent}%` }} /></div></div>
-          <nav className="source-module-list" aria-label="Course modules">
-            {course.modules.map((entry, index) => (
-              <button className={`${moduleIndex === index ? 'is-active ' : ''}${completed.has(entry.id) ? 'is-complete' : ''}`.trim()} type="button" key={entry.id} onClick={() => openModule(index)}>
-                <span className="source-module-number">{completed.has(entry.id) ? '✓' : String(index + 1).padStart(2, '0')}</span>
-                <span><small>Module {index + 1} · {entry.slideCount} slides</small><strong>{course.meta.moduleNames[index] || entry.title}</strong></span>
-              </button>
-            ))}
-          </nav>
-          {tests.length > 0 && <div className="source-test-list"><span className="eyebrow">Course tests</span>{tests.map((test, index) => <button className={mode === 'test' && activeTest === index ? 'is-active' : ''} type="button" key={test.id} onClick={() => openTest(index)}><span>{testScores[test.id] !== undefined ? `${testScores[test.id]}%` : `T${index + 1}`}</span><strong>{test.title.replace(/^Test \d+: /, '')}</strong></button>)}</div>}
-          <div className="source-integrity-note"><strong>Source integrity</strong><p>{course.sourceNotice}</p></div>
-        </aside>
-        <button className={`source-sidebar-scrim${sidebarOpen ? ' is-visible' : ''}`} type="button" aria-label="Close course outline" onClick={() => setSidebarOpen(false)} />
-
-        <main className="source-reader">
-          <div className="source-reader-inner">
-            <nav className="source-breadcrumb" aria-label="Course location"><span>{course.title}</span><span>/</span><span>Module {moduleIndex + 1}</span><span>/</span><span>Slide {slide.number}</span></nav>
-            <section className="source-module-hero">
-              <div><span className="eyebrow">Module {String(moduleIndex + 1).padStart(2, '0')}</span><h1>{moduleName}</h1><p>Source module: {module.sourceFile}</p></div>
-              <div className="source-module-visual"><img src={course.meta.illustration} alt={course.meta.illustrationAlt} /><span className="source-module-xp">+250 XP</span></div>
-            </section>
-
-            <div className="source-mode-tabs" role="tablist" aria-label="Module views"><button className={mode === 'lesson' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'lesson'} onClick={() => setMode('lesson')}>Source lesson</button><button className={mode === 'practice' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'practice'} onClick={() => setMode('practice')}>Practice · up to 75 XP</button>{tests.length > 0 && <button className={mode === 'test' ? 'is-active' : ''} type="button" role="tab" aria-selected={mode === 'test'} onClick={() => setMode('test')}>Course tests</button>}</div>
-
-            {mode === 'test' && tests[activeTest] ? <SourceCourseAssessment key={tests[activeTest].id} course={course} test={tests[activeTest]} bestScore={testScores[tests[activeTest].id] || 0} onFinish={finishTest} /> : mode === 'lesson' ? <><section className="source-slide-card" aria-live="polite">
-              <div className="source-slide-toolbar"><span>Source slide {slide.number} of {module.slideCount}</span><span>Course screen {overallSlide} of {course.slideCount}</span></div>
-              <div className="source-slide-grid">
-                <article className="source-slide-copy">
-                  <span className="source-slide-label">Supplied course content</span>
-                  <h2>{slide.title}</h2>
-                  <div className="source-text-blocks">
-                    {bodyBlocks.length ? bodyBlocks.map((block, index) => <p key={`${slide.number}-${index}`}>{block}</p>) : <p className="source-empty-slide">This source slide is primarily visual. Review the original slide image beside this text.</p>}
-                  </div>
-                  {slide.notes.length > 0 && <details className="source-notes"><summary>Source presenter notes</summary>{slide.notes.map((note, index) => <p key={index}>{note}</p>)}</details>}
-                </article>
-                <figure className="source-slide-visual"><img src={visual.src} alt={visual.alt} /><figcaption>Original module visual · source slide {visual.slide}</figcaption></figure>
-              </div>
-            </section>
-
-            <div className="source-slide-jump"><label htmlFor="source-slide-range">Slide navigator</label><input id="source-slide-range" type="range" min="1" max={module.slides.length} value={slideIndex + 1} onChange={(event) => setSlideIndex(Number(event.target.value) - 1)} /><strong>{slideIndex + 1}/{module.slides.length}</strong></div>
-            <div className="source-reader-actions"><button className="btn btn-ghost" type="button" onClick={goPrevious} disabled={moduleIndex === 0 && slideIndex === 0}>Previous</button><button className="btn btn-secondary" type="button" onClick={markModuleComplete}>{completed.has(module.id) ? 'Module completed' : 'Mark module complete'}</button><button className="btn btn-primary" type="button" onClick={goNext}>{moduleIndex === course.modules.length - 1 && slideIndex === module.slides.length - 1 ? 'Complete course reading' : 'Next'}</button></div></> : <SourceModulePractice module={module} moduleName={moduleName} previousBest={practiceScores[module.id] || 0} onFinish={finishPractice} />}
-          </div>
-        </main>
-      </div>
-      <div className={`toast${toast ? ' show' : ''}`} role="status" aria-live="polite">{toast}</div>
-    </div>
-  );
+  return <div className="player-shell"><header className="player-topbar"><div className="player-topbar-left"><button className="btn btn-ghost btn-sm player-menu-btn" type="button" aria-label="Open course outline" aria-expanded={sidebarOpen} onClick={() => setSidebarOpen((value) => !value)}>☰</button><Brand /></div><div className="player-topbar-center"><span className="player-course-title">{course.title}</span><span className="player-course-subtitle">Interactive course formatted from the supplied curriculum.</span></div><div className="player-topbar-right"><div className="player-hud" aria-label="Training status"><span className="hud-stat"><small>Training XP</small><strong>{xp}</strong></span><span className="hud-stat"><small>Rank</small><strong>{rank}</strong></span></div><div className="top-progress-pill"><span>Progress</span><strong>{percent}%</strong></div><Link className="btn btn-ghost btn-sm" href="/dashboard">Exit to dashboard</Link></div></header><div className="player-grid"><aside className={`player-sidebar${sidebarOpen ? ' open' : ''}`}><div className="player-sidebar-head"><div><span className="eyebrow">Course outline</span><h2>{course.title}</h2><p>{course.moduleCount} modules organized into focused lesson sections.</p></div><button className="btn btn-ghost btn-sm sidebar-close" type="button" onClick={() => setSidebarOpen(false)}>Close</button></div><div className="player-progress-card"><div className="player-progress-label"><span>Completed items</span><strong>{percent}%</strong></div><div className="progress-track"><span style={{ width: `${percent}%` }} /></div><div className="outline-meta"><span>{completed.size} completed</span><span>{flatItems.length} items</span></div></div><div className="badge-shelf" aria-label="Course achievements"><div className="badge-shelf-title"><span>Achievement badges</span><span>{badges.filter(Boolean).length} / 5</span></div><div className="badge-row">{['FR', 'SA', 'HS', 'RS', 'MR'].map((badge, index) => <span className={`academy-badge${badges[index] ? ' earned' : ''}`} key={badge}>{badge}</span>)}</div></div><div className="course-outline">{chapters.map((chapter) => { const open = openChapters.has(chapter.id); const done = chapter.items.filter((item) => completed.has(item.id)).length; return <section className={`outline-chapter${open ? ' open' : ''}`} key={chapter.id}><button className="outline-chapter-toggle" type="button" aria-expanded={open} onClick={() => toggleChapter(chapter.id)}><span><strong>{chapter.title}</strong><small>{chapter.subtitle}</small></span><span className="outline-toggle-meta"><span className="outline-count">{done} / {chapter.items.length} complete</span><span className="outline-chevron">⌄</span></span></button>{open && <div className="outline-items">{chapter.items.map((item) => { const index = flatItems.findIndex((entry) => entry.id === item.id); return <button className={`outline-item outline-type-lesson${currentIndex === index ? ' active' : ''}${completed.has(item.id) ? ' done' : ''}`} type="button" onClick={() => chooseItem(index)} key={item.id}><span className="outline-status">{completed.has(item.id) ? '✓' : ''}</span><span className="outline-text"><small>{item.label}</small><strong>{item.title}</strong></span><span className="outline-badge">Section</span></button>; })}</div>}</section>; })}</div><CourseSyncStatus status="Local progress is active. Academy cloud sync will connect after enrollment." tone="preview" /></aside><button className={`player-overlay${sidebarOpen ? ' show' : ''}`} type="button" aria-label="Close course outline" onClick={() => setSidebarOpen(false)} /><main className="player-main" ref={mainRef}><div className="player-lesson-wrapper"><div className="player-breadcrumb"><span>Fire and Rescue Academy</span><span>/</span><span>{current.chapterHeading}</span><span>/</span><span>{current.title}</span></div><article className="lesson-panel active"><header className="lesson-heading"><span className="mission-line">Mission {String(currentIndex + 1).padStart(2, '0')} of {flatItems.length}</span><span className="eyebrow">{current.chapterSubtitle}</span><h1>{current.title}</h1><p>{current.description}</p><div className="lesson-meta-row"><span className="lesson-meta-chip">{current.label}</span><span className="lesson-meta-chip">Interactive section</span><span className={`lesson-meta-chip${completed.has(current.id) ? ' success' : ''}`}>{completed.has(current.id) ? 'Completed' : 'Not yet completed'}</span></div></header><figure className="lesson-hero-card source-course-hero"><img src={course.meta.illustration} alt={course.meta.illustrationAlt} /><figcaption>{course.title} · {current.chapterSubtitle}</figcaption></figure><SourceLessonCards item={current} /><section className="lesson-card lesson-complete-card"><h3>Ready to continue?</h3><p>Mark this item complete, or move to the next item when you are done reviewing the material.</p><button className="btn btn-secondary" type="button" onClick={() => markComplete(current.id)}>Mark this item complete</button></section></article><div className="player-actions"><button className="btn btn-ghost" type="button" disabled={currentIndex === 0} onClick={() => chooseItem(currentIndex - 1)}>Previous</button><button className="btn btn-primary" type="button" onClick={next}>{currentIndex === flatItems.length - 1 ? 'Finish course' : 'Next item'}</button></div></div></main></div><div className={`toast${toast ? ' show' : ''}`} role="status" aria-live="polite">{toast}</div></div>;
 }

@@ -1,4 +1,5 @@
 import type { SourceCourseDefinition, SourceModule, SourceSlide } from './source-course-types';
+import { getSourceCourseTests, type SourceCourseTest } from './source-course-tests';
 
 export const SOURCE_SLIDES_PER_SECTION = 6;
 
@@ -22,7 +23,17 @@ export type SourcePracticeItem = {
   module: SourceModule;
 };
 
-export type SourceOutlineItem = SourceLessonItem | SourcePracticeItem;
+export type SourceAssessmentItem = {
+  id: string;
+  type: 'assessment';
+  label: string;
+  title: string;
+  description: string;
+  moduleIndex: number;
+  test: SourceCourseTest;
+};
+
+export type SourceOutlineItem = SourceLessonItem | SourcePracticeItem | SourceAssessmentItem;
 
 export type SourceOutlineChapter = {
   id: string;
@@ -42,7 +53,7 @@ function sectionTitle(slides: SourceSlide[], fallback: string) {
 }
 
 export function buildSourceLessonOutline(course: SourceCourseDefinition): SourceOutlineChapter[] {
-  return course.modules.map((module, moduleIndex) => {
+  const chapters = course.modules.map((module, moduleIndex) => {
     const slides = module.slides.filter(hasCourseText);
     const items: SourceOutlineItem[] = [];
     for (let index = 0; index < slides.length; index += SOURCE_SLIDES_PER_SECTION) {
@@ -77,6 +88,26 @@ export function buildSourceLessonOutline(course: SourceCourseDefinition): Source
       items
     };
   });
+  const tests = getSourceCourseTests(course.slug as Parameters<typeof getSourceCourseTests>[0]);
+  if (tests.length > 0) {
+    chapters.push({
+      id: `${course.slug}-assessments`,
+      title: 'Course Assessments',
+      subtitle: 'Tests covering the complete supplied curriculum',
+      moduleIndex: -1,
+      module: course.modules[0],
+      items: tests.map((test, index) => ({
+        id: test.id,
+        type: 'assessment' as const,
+        label: `Course test ${index + 1}`,
+        title: test.title,
+        description: test.description,
+        moduleIndex: test.moduleIndexes[0] || 0,
+        test
+      }))
+    });
+  }
+  return chapters;
 }
 
 export function countSourceLessonSections(course: SourceCourseDefinition) {

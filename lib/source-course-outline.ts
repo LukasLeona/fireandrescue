@@ -12,13 +12,25 @@ export type SourceLessonItem = {
   slides: SourceSlide[];
 };
 
+export type SourcePracticeItem = {
+  id: string;
+  type: 'practice';
+  label: string;
+  title: string;
+  description: string;
+  moduleIndex: number;
+  module: SourceModule;
+};
+
+export type SourceOutlineItem = SourceLessonItem | SourcePracticeItem;
+
 export type SourceOutlineChapter = {
   id: string;
   title: string;
   subtitle: string;
   moduleIndex: number;
   module: SourceModule;
-  items: SourceLessonItem[];
+  items: SourceOutlineItem[];
 };
 
 function hasCourseText(slide: SourceSlide) {
@@ -32,7 +44,7 @@ function sectionTitle(slides: SourceSlide[], fallback: string) {
 export function buildSourceLessonOutline(course: SourceCourseDefinition): SourceOutlineChapter[] {
   return course.modules.map((module, moduleIndex) => {
     const slides = module.slides.filter(hasCourseText);
-    const items: SourceLessonItem[] = [];
+    const items: SourceOutlineItem[] = [];
     for (let index = 0; index < slides.length; index += SOURCE_SLIDES_PER_SECTION) {
       const sectionSlides = slides.slice(index, index + SOURCE_SLIDES_PER_SECTION);
       const sectionNumber = items.length + 1;
@@ -46,10 +58,20 @@ export function buildSourceLessonOutline(course: SourceCourseDefinition): Source
         slides: sectionSlides
       });
     }
+    const moduleName = course.meta.moduleNames[moduleIndex] || module.title;
+    items.push({
+      id: `${module.id}-practice`,
+      type: 'practice',
+      label: 'Module practice',
+      title: `${moduleName} Practice`,
+      description: 'Complete the source-based challenge to check your understanding and earn training XP.',
+      moduleIndex,
+      module
+    });
     return {
       id: module.id,
       title: `Module ${moduleIndex + 1}`,
-      subtitle: course.meta.moduleNames[moduleIndex] || module.title,
+      subtitle: moduleName,
       moduleIndex,
       module,
       items

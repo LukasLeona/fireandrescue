@@ -1,6 +1,6 @@
 # Fire and Rescue Academy LMS
 
-Fire and Rescue Academy is a Next.js LMS for emergency-response training. It combines public academy pages, a role-based Supabase account workflow, staff and student dashboards, and a gamified HazMat Awareness course.
+Fire and Rescue Academy is a Next.js LMS for emergency-response training. It combines public academy pages, a role-based Supabase account workflow, staff and student dashboards, and three published, gamified courses.
 
 ## Application features
 
@@ -9,7 +9,10 @@ Fire and Rescue Academy is a Next.js LMS for emergency-response training. It com
 - Exactly one protected `super_admin`, plus `admin`, `instructor`, and `student` roles.
 - Staff application review, invitations, member management, reporting, rankings, and audit history.
 - Student enrollment, lesson completion, quiz attempts, scores, and progress tracking.
-- An interactive HazMat player with 24 supplied course items and 160 supplied questions, XP, ranks, achievements, activities, quiz feedback, and a daily drill.
+- A shared interactive player for HazMat Awareness, Fire Inspector 1, and Fire Instructor 1, with collapsible outlines, XP, ranks, achievements, practice activities, and course tests.
+- Preserved Fire Inspector 1 and Fire Instructor 1 source wording, reformatted from 2,799 supplied presentation slides into focused lesson sections.
+- Canonical course URLs under `/courses/`, with legacy HazMat links permanently redirected for compatibility.
+- Login-required catalog entry and automatic enrollment for approved students opening an available course.
 - Local course progress for visitors and Supabase cloud sync for approved, enrolled students.
 
 ## Requirements
@@ -37,11 +40,13 @@ npm run build
 
 ## Supabase setup
 
-Apply these migrations in order:
+Apply the migrations in filename order. The current schema includes five migrations, ending with:
 
 1. `supabase/migrations/202610090001_lms_core.sql`
 2. `supabase/migrations/202610090002_seed_catalog.sql`
 3. `supabase/migrations/202610090003_harden_student_writes.sql`
+4. `supabase/migrations/202610120004_publish_source_courses.sql`
+5. `supabase/migrations/202610130005_publish_available_courses.sql`
 
 Set the Authentication Site URL to `https://fireandrescueacademy.vercel.app` and allow these redirect URLs:
 

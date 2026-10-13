@@ -8,7 +8,7 @@ type Course = { id: string; slug: string; title: string; description: string; co
 type Enrollment = { id: string; course_id: string; status: string; progress_percent: number };
 
 const courseRoutes: Record<string, string> = {
-  'hazmat-awareness': '/hazmat-course',
+  'hazmat-awareness': '/courses/hazmat-awareness',
   'fire-inspector-1': '/courses/fire-inspector-1',
   'fire-instructor-1': '/courses/fire-instructor-1'
 };

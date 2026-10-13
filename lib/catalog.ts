@@ -17,7 +17,7 @@ export const catalogCourses: CatalogCourse[] = [
     image: '/assets/images/course-covers/hazmat-awareness.png',
     lessons: '16 lessons',
     duration: '4–5 hours',
-    href: '/hazmat-awareness',
+    href: '/courses/hazmat-awareness',
     available: true
   },
   {

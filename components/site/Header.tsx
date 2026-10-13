@@ -7,7 +7,7 @@ import { Brand } from './Brand';
 
 const links = [
   { href: '/', label: 'Home', match: ['/'] },
-  { href: '/courses', label: 'Courses', match: ['/courses', '/hazmat-awareness', '/hazmat-course'] },
+  { href: '/courses', label: 'Courses', match: ['/courses'] },
   { href: '/about', label: 'About', match: ['/about'] },
   { href: '/contact', label: 'Contact', match: ['/contact'] }
 ];
